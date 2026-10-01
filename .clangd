@@ -1,0 +1,9 @@
+# 에디터(clangd)가 터미널의 gcc 와 같은 눈으로 코드를 보게 맞추는 설정.
+# 여기 적힌 플래그는 빌드와 같아야 한다. upstream malloc-lab/Makefile 의 CFLAGS 는
+# -Wall -O2 -g 이고 -std 가 없어서 gcc 기본값(gnu23)이 적용된다.
+# 5주차의 -std=c11 은 쓸 수 없다. 순수 c11 에서는 mdriver.c 가 쓰는 getopt 와
+# strdup 이 선언되지 않아 빌드가 실패한다.
+CompileFlags:
+  Add:
+    - -std=gnu23
+    - -Wall
