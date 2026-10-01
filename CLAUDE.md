@@ -86,7 +86,10 @@ Build facts and `mdriver` quirks:
 - Upstream `malloc-lab/Makefile`: `CFLAGS = -Wall -O2 -g`, no `-std`, no `-m32`.
   The CMU original builds 32-bit; here pointers are 8 bytes. `-std=c11` cannot
   build `mdriver.c` (`getopt`, `strdup` undeclared), so `.clangd` uses `gnu23`.
-- `-O2` means gdb can show `<optimized out>`. Observed on `argc` in `main`.
+- Upstream builds with `-O2`. On that build gdb shows `<optimized out>` for locals
+  and skips lines (measured on `mm_malloc` of the starter). So `r_`, `score` and
+  `verify` use the upstream `-O2` build, which is the graded one, and `g_` / `dg_`
+  build a separate `-O0 -g3` binary. Throughput seen there is not the graded number.
 - `mdriver` exits 0 even when it reports errors. `-g` prints `correct:N` and
   `perfidx:N`; `perfidx` is 0 when any error occurred.
 - `short1` and `short2` are not in the default list (`config.h`); `-f` paths are
@@ -102,7 +105,8 @@ Build facts and `mdriver` quirks:
 `GNUmakefile` is ours and wraps the upstream `Makefile` without editing it:
 
 ```
-make r_<name> | g_<name>      host: one trace, mdriver -V -f traces/<name>-bal.rep | gdb (tab-completes)
+make r_<name>                 host: one trace, mdriver -V -f traces/<name>-bal.rep (-O2 build, tab-completes)
+make g_<name>                 host: the same arguments under gdb (-O0 debug build)
 make score                    host: the 11 default traces, mdriver -v → ends with the Perf index line
 make verify                   host: 13 traces, exit 0 only if every one is valid (Perf index reported, not gated)
 make dcheck | dscore          container: verify | score (reference environment)
@@ -113,13 +117,17 @@ make dshell | dimage | dclean
 Names: `short1 short2 amptjp cccp cp-decl expr coalescing random random2 binary
 binary2 realloc realloc2`.
 
-Host output lives in `malloc-lab/` (upstream's `.gitignore` covers it). The
+Host `-O2` output lives in `malloc-lab/` (upstream's `.gitignore` covers it). The
 container copies the sources into `build-docker/` and builds there, so the two
-environments never mix objects; `build-docker/` is ignored. Inside the container
-gdb lists the **copy** in `build-docker/`, not `malloc-lab/mm.c`; edit the
-original. `rebuild` / `rerun` work in both: on the host gdb finds
-`malloc-lab/Makefile`, in the container it finds the root `GNUmakefile`, which
-copies and rebuilds. Upstream `make` inside `malloc-lab/` still works.
+environments never mix objects. The `-O0` debug builds go to `build-dbg/` (host)
+and `build-docker-dbg/` (container); all three directories are ignored. A debug
+build compiles the original files by absolute path, so gdb lists
+`malloc-lab/mm.c` itself in both environments. Next to each debug binary
+`GNUmakefile` writes `mdriver.build`, the same NUL-separated gcc record that
+`c dbg` writes, so his `rebuild` / `rerun` replay it (measured 2026-10-01 on the
+host and in the container). `c` and `c dbg` themselves cannot build this project:
+they use `-std=c17` with `-Werror -Wconversion …` and take one source file.
+Upstream `make` inside `malloc-lab/` still works.
 
 Repo layout: `upstream` = `krafton-jungle/malloc_lab_docker` (pull only),
 `origin` = `benjohnbill/SW-AI-malloc-lab`. Sync with `git pull upstream master`.

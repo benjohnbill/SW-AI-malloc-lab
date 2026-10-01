@@ -2,3 +2,7 @@
 mdriver
 # 컨테이너 빌드 산출물 (GNUmakefile 이 컨테이너용 소스 사본과 빌드를 여기에 둔다)
 build-docker/
+
+# gdb 용 -O0 디버그 빌드 산출물 (GNUmakefile 의 g_ / dg_)
+build-dbg/
+build-docker-dbg/
