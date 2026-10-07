@@ -24,7 +24,7 @@ team_t team = {
 /* Single word (4) & Double word (8) Alignment based on 32-bit Computer*/
 #define WSIZE       4       /* Word size (bytes) */
 #define DSIZE       8       /* Double word size (bytes) */
-#define CHUNKSIZE (1<<10)   /* Extend heap by this amount (bytes) */
+#define CHUNKSIZE (1<<12)   /* Extend heap by this amount (bytes) */
 
 #define HSIZE WSIZE /* HDR size(bytes) */
 #define FSIZE WSIZE /* FTR size(bytes) */
@@ -100,6 +100,16 @@ static unsigned int bsize(size_t psize){
 //     } return NULL;
 // }
 
+static char *next_refit(char *bp, size_t size, char *fit_spot){
+    if (fit_spot == NULL){
+        return NULL;
+    } while (bp != fit_spot){
+        if (GET_ALLOC(bp) == FREE && GET_SIZE(bp) >= (size_t)bsize(size)){
+            return bp;
+        } bp = NEXT_P(bp);
+    } return NULL;
+}
+
 static char *fit_spot = NULL;
 static char *next_fit(char *bp, size_t size){
     if (fit_spot != NULL){
@@ -109,8 +119,8 @@ static char *next_fit(char *bp, size_t size){
             fit_spot = bp;
             return bp;
         } bp = NEXT_P(bp);
-    } fit_spot = bp;
-    return NULL;
+    } fit_spot = next_refit(prolog_p, size, fit_spot);
+    return fit_spot;
 }
 
 static char *coalescence(char *bp){
@@ -134,6 +144,7 @@ static char *coalescence(char *bp){
 
     METADATA_SET(HDR(bp), size, FREE);
     METADATA_SET(FTR(bp), size, FREE);
+    fit_spot = bp;
     return bp;
 }
 
@@ -217,6 +228,7 @@ void *free_case(void *bp, void *next_bp, size_t total_size, size_t old_size, siz
             SET(HDR(bp), total_size);
             SET(FTR(bp), total_size);
             place(bp, PONLY(total_size));
+            fit_spot = NEXT_P(bp);
             return bp;
         } // 1-2. total_size < new_size
         else{
@@ -268,6 +280,7 @@ void *mm_realloc(void *bp, size_t size){
             return new_bp;
         }else {
             place(bp, size);
+            fit_spot = bp;
             return bp;
         }
     }
