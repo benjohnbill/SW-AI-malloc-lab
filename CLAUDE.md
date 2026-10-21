@@ -1,7 +1,8 @@
 # CLAUDE.md — SW-AI-malloc-lab (week 6 malloc lab)
 
-The tutor spine is imported by the parent `CLAUDE.md`; this file fills its
-slots. Solo week: no `Mode:` line.
+The tutor spine is imported by the parent `CLAUDE.md`; this file fills the
+week-file slots (`skills/jungle-week-init/SKILL.md` § 6). Solo week: no
+`Mode:` line, so tutor mode.
 
 ## Purpose
 
@@ -63,7 +64,8 @@ listings are not spoilers, and this week needs knowledge taken from the book;
 the course notice says the same (read the listing, understand it, retype it).
 So he may read, quote and ask about the book. A question about what a listing
 does is a direct request. The agent still does not write or paste his `mm.c`;
-the spine's rules (one question per turn, review instead of rewrite) apply.
+tutor mode's rules (`../docs/tutor-mode.md`: one question per turn, review
+instead of rewrite) apply.
 
 ## Slot 3 — environment
 
